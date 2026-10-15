@@ -1,89 +1,42 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Face Scanner</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#020611;color:#eafaff;font-family:Arial,sans-serif}
-header{padding:22px;text-align:center;border-bottom:1px solid #00cfff}
-h1{color:#00d9ff;text-shadow:0 0 18px #008cff}
-main{max-width:950px;margin:auto;padding:20px;text-align:center}
-p{color:#9acde9}
-.camera{position:relative;margin:22px auto;width:100%;max-width:640px;aspect-ratio:4/3;border:2px solid #00cfff;border-radius:20px;overflow:hidden;background:radial-gradient(circle,#102d55,#020611 70%);box-shadow:0 0 30px #007bff55}
-video,canvas{position:absolute;width:100%;height:100%;inset:0;object-fit:cover}
-video{transform:scaleX(-1)}
-canvas{pointer-events:none}
-.scan{position:absolute;inset:12%;border:2px solid #00eaff;border-radius:45%;box-shadow:0 0 25px #00cfff;pointer-events:none}
-.scan:after{content:"";position:absolute;left:0;right:0;height:3px;background:#00eeff;box-shadow:0 0 20px #00eeff;animation:scan 2s linear infinite}
-@keyframes scan{from{top:0}to{top:100%}}
-button{padding:14px 24px;border:1px solid #00eaff;border-radius:30px;background:#042441;color:#fff;font-size:16px;cursor:pointer;margin:6px}
-button:hover{background:#07547a}
-#status{color:#00eaff;margin:16px}
-.note{font-size:12px;color:#7897b4}
-</style>
-</head>
-<body>
-<header>
-<h1>◈ AI FACE SCANNER</h1>
-<p>Yuzingni futuristik hologrammaga aylantir!</p>
-</header>
-<main>
-<h2>Kelajak texnologiyasi ⚡</h2>
-<p>Kamerani yoq va neon skaner effektini sinab ko‘r.</p>
-<div class="camera">
-<video id="video" autoplay playsinline muted></video>
-<canvas id="canvas"></canvas>
-<div class="scan"></div>
-</div>
-<button id="start">📷 Kamerani yoqish</button>
-<button id="stop">✖ Kamerani o‘chirish</button>
-<div id="status">Tizim tayyor. Kamerani yoq.</div>
-<p class="note">Maxfiylik: video qurilmangdan tashqariga yuborilmaydi. Bu demo yuzni shaxsini aniqlamaydi.</p>
-</main>
-<script>
-const video=document.querySelector('#video');
-const canvas=document.querySelector('#canvas');
-const ctx=canvas.getContext('2d');
-const status=document.querySelector('#status');
-let stream=null,raf=0;
-function draw(){
- canvas.width=canvas.clientWidth*devicePixelRatio;
- canvas.height=canvas.clientHeight*devicePixelRatio;
- ctx.clearRect(0,0,canvas.width,canvas.height);
- const w=canvas.width,h=canvas.height;
- ctx.strokeStyle='#00eaff';ctx.fillStyle='#64f7ff';
- ctx.lineWidth=2*devicePixelRatio;
- const t=Date.now()/1000;
- for(let i=0;i<45;i++){
-  const x=(Math.sin(t+i*12.3)*.5+.5)*w;
-  const y=(Math.cos(t*.8+i*7.1)*.5+.5)*h;
-  ctx.beginPath();ctx.arc(x,y,2*devicePixelRatio,0,Math.PI*2);ctx.fill();
+else ctx.lineTo(p.x*w,p.y*h);
+      });
+      ctx.stroke();
+     }
+     ctx.restore();
+     status.textContent="YUZ ANIQLANDI ✓ — neon skaner faol";
+    }else{
+     status.textContent="Yuz topilmadi — kameraga qarab turing.";
+    }
+   }catch(e){status.textContent="Yuz tahlilida xatolik. Qayta urinib ko‘ring.";}
+  }
  }
- ctx.strokeStyle='#147bff';
- for(let i=0;i<8;i++){
-  ctx.beginPath();
-  ctx.arc(w/2,h/2,Math.min(w,h)*(.12+i*.045)+Math.sin(t*2+i)*4*devicePixelRatio,0,Math.PI*2);
-  ctx.stroke();
- }
- raf=requestAnimationFrame(draw);
+ requestAnimationFrame(draw);
 }
-document.querySelector('#start').onclick=async()=>{
+
+document.querySelector("#start").onclick=async()=>{
  try{
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+  status.textContent="Kamera va AI ishga tushmoqda...";
+  if(!detector)await setupAI();
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:"user"},audio:false
+  });
   video.srcObject=stream;
-  status.textContent='Kamera faol — hologramma ishga tushdi!';
-  cancelAnimationFrame(raf);draw();
+  await video.play();
+  running=true;
+  status.textContent="Kameraga qarang...";
+  requestAnimationFrame(draw);
  }catch(e){
-  status.textContent='Kamera ochilmadi. Saytga kamera ruxsatini bering.';
+  status.textContent="Ishga tushmadi. Internet va kamera ruxsatini tekshiring.";
+  console.error(e);
  }
 };
-document.querySelector('#stop').onclick=()=>{
- if(stream)stream.getTracks().forEach(track=>track.stop());
- stream=null;video.srcObject=null;cancelAnimationFrame(raf);
+
+document.querySelector("#stop").onclick=()=>{
+ running=false;
+ if(stream)stream.getTracks().forEach(t=>t.stop());
+ stream=null;video.srcObject=null;
  ctx.clearRect(0,0,canvas.width,canvas.height);
- status.textContent='Kamera o‘chirildi.';
+ status.textContent="Kamera o‘chirildi.";
 };
 </script>
 </body>
